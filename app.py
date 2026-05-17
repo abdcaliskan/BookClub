@@ -303,6 +303,50 @@ with tab1:
     
     if active_meeting.empty:
         st.warning("Şu an planlanmış aktif bir buluşma/oylama yok. Lütfen '📅 Yeni Buluşma Planla' sekmesine giderek bir etkinlik oluşturun.")
+        
+        # Sıradaki buluşma ve seçilen kitap bilgisi gösterimi
+        latest_completed = fetch_data("SELECT * FROM meetings WHERE status = 'Tamamlandı' ORDER BY id DESC LIMIT 1")
+        if not latest_completed.empty:
+            comp_id = latest_completed.iloc[0]['id']
+            comp_title = latest_completed.iloc[0]['title']
+            comp_date = latest_completed.iloc[0]['meeting_date']
+            
+            # Bu buluşmada seçilen kitabı bul
+            selected_book = fetch_data("SELECT * FROM books WHERE meeting_id = ? AND status = 'Seçildi' LIMIT 1", (int(comp_id),))
+            
+            if not selected_book.empty:
+                b_title = selected_book.iloc[0]['title']
+                b_author = selected_book.iloc[0]['author']
+                b_sug = selected_book.iloc[0]['suggested_by']
+                
+                # Kalan süreyi hesapla
+                days_left_str = ""
+                try:
+                    meeting_dt = datetime.strptime(comp_date, "%Y-%m-%d %H:%M")
+                    now = datetime.now()
+                    delta = meeting_dt - now
+                    if delta.total_seconds() > 0:
+                        days = delta.days
+                        hours = delta.seconds // 3600
+                        mins = (delta.seconds % 3600) // 60
+                        days_left_str = f"⏳ Buluşmaya Kalan Süre: <b>{days} Gün, {hours} Saat, {mins} Dakika</b>"
+                    else:
+                        days_left_str = "⌛ Buluşma zamanı geldi/geçti!"
+                except Exception as e:
+                    days_left_str = ""
+                
+                st.markdown(f"""
+                <div style="background-color: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 16px; padding: 22px; margin-top: 25px; backdrop-filter: blur(10px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);">
+                    <h3 style="margin-top: 0; color: #a5b4fc; font-weight: 700; background: -webkit-linear-gradient(45deg, #a5b4fc, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">📖 Sıradaki Okuma ve Buluşma Bilgisi</h3>
+                    <p style="font-size: 16px; margin-bottom: 8px; color: #f8fafc;"><b>Etkinlik:</b> {comp_title}</p>
+                    <p style="font-size: 16px; margin-bottom: 8px; color: #f8fafc;"><b>Buluşma Tarihi:</b> {comp_date}</p>
+                    <p style="font-size: 18px; color: #f8fafc; margin-bottom: 12px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <b>Okunacak Kitap:</b> 📖 <i>{b_title}</i> - {b_author} <span style="font-size: 14px; color: #94a3b8; font-weight: normal;">(Öneren: {b_sug})</span>
+                    </p>
+                    <hr style="border-color: rgba(255,255,255,0.1); margin: 14px 0;">
+                    <p style="font-size: 16px; color: #818cf8; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px;">{days_left_str}</p>
+                </div>
+                """, unsafe_allow_html=True)
     else:
         m_id = active_meeting.iloc[0]['id']
         m_title = active_meeting.iloc[0]['title']
