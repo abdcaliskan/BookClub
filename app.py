@@ -201,7 +201,7 @@ st.title("📚 Kitap Kulübü Merkezi")
 
 MEMBERS = {
     "Abdullah": "💻",
-    "Reyna": "👑",
+    "Reyna": "🧘‍♀️",
     "Settar": "📖",
     "Kutay": "🥨",
     "Ecem": "⭐",
