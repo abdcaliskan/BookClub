@@ -207,8 +207,8 @@ MEMBERS = {
     "Ecem": "⭐",
     "Ayşe": "✈️",
     "Yaman": "💪",
-    "Aslı": "🏃‍♀️",
-    "Buse": "🧴"
+    "Aslı": "💅",
+    "Buse": "🐒"
 }
 
 if 'username' not in st.session_state:
