@@ -612,23 +612,73 @@ with tab4:
         st.info("Henüz seçilen kitap olmadığı için grafik oluşturulamıyor.")
         
     st.markdown("---")
-    st.subheader("🔍 Tüm Öneriler ve Detaylar")
+    st.subheader("🔍 Tüm Buluşmalar ve Öneriler")
     
     query = """
-    SELECT IFNULL(m.title, 'Eski Sistem') as 'Buluşma', b.title as 'Kitap Adı', b.author as 'Yazar', 
-           b.suggested_by as 'Öneren', b.status as 'Durum', COUNT(v.id) as 'Oy Sayısı', GROUP_CONCAT(v.voter_name, ', ') as 'Oy Verenler'
+    SELECT IFNULL(m.title, 'Eski Sistem') as meeting_title, 
+           m.meeting_date as meeting_date,
+           b.id as book_id, b.title as book_title, b.author, b.suggested_by, b.status,
+           COUNT(v.id) as vote_count,
+           GROUP_CONCAT(v.voter_name, ', ') as voters
     FROM books b
     LEFT JOIN meetings m ON b.meeting_id = m.id
     LEFT JOIN votes v ON b.id = v.book_id
     GROUP BY b.id
-    ORDER BY b.id DESC
+    ORDER BY m.id DESC, vote_count DESC
     """
     df_history = fetch_data(query)
     
     if df_history.empty:
         st.info("Kayıt bulunamadı.")
     else:
-        def color_status(val):
-            color = '#4ade80' if val == 'Seçildi' else '#fbbf24' if val == 'Önerildi' else '#f8fafc'
-            return f'color: {color}; font-weight: bold;'
-        st.dataframe(df_history.style.map(color_status, subset=['Durum']), use_container_width=True, hide_index=True)
+        meetings = df_history['meeting_title'].unique()
+        for m_title in meetings:
+            df_m_books = df_history[df_history['meeting_title'] == m_title]
+            m_date_raw = df_m_books.iloc[0]['meeting_date']
+            m_date_formatted = format_turkish_date(m_date_raw) if pd.notnull(m_date_raw) and m_date_raw else ""
+            
+            # Find the selected/winner book if any
+            selected_book = df_m_books[df_m_books['status'] == 'Seçildi']
+            winner_text = ""
+            if not selected_book.empty:
+                winner_text = f"🏆 Seçilen Kitap: <b>{selected_book.iloc[0]['book_title']}</b>"
+                
+            # Render a header card for the meeting
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.08)); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px; padding: 16px 20px; margin-top: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); backdrop-filter: blur(8px);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                    <span style="margin: 0; color: #f8fafc; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">📅 {m_title}</span>
+                    {f'<span style="font-size: 12px; color: #a5b4fc; background: rgba(99, 102, 241, 0.15); padding: 4px 12px; border-radius: 20px; font-weight: 600; border: 1px solid rgba(99, 102, 241, 0.3);">{m_date_formatted}</span>' if m_date_formatted else ""}
+                </div>
+                {f'<div style="margin-top: 8px; font-size: 14px; color: #4ade80; font-weight: 600; display: flex; align-items: center; gap: 6px;">{winner_text}</div>' if winner_text else ""}
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Render each suggested book under this meeting
+            for idx, row in df_m_books.iterrows():
+                is_sel = row['status'] == 'Seçildi'
+                bg = "rgba(99, 102, 241, 0.12)" if is_sel else "rgba(30, 41, 59, 0.4)"
+                border = "1px solid rgba(99, 102, 241, 0.4)" if is_sel else "1px solid rgba(255,255,255,0.05)"
+                badge = "<span style='background: #10b981; color: white; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);'>SEÇİLDİ</span>" if is_sel else "<span style='background: rgba(255,255,255,0.06); color: #94a3b8; padding: 3px 8px; border-radius: 10px; font-size: 11px;'>Öneri</span>"
+                
+                sug_name = row['suggested_by']
+                avatar = MEMBERS.get(sug_name, "👤")
+                
+                voters_list = row['voters']
+                voters_section = f"<div style='font-size: 12px; color: #94a3b8; margin-top: 6px; padding-left: 2px;'>👥 Oy Verenler: <b>{voters_list}</b></div>" if pd.notnull(voters_list) and voters_list else ""
+                
+                st.markdown(f"""
+                <div style="background: {bg}; border: {border}; border-radius: 14px; padding: 14px 18px; margin-top: 10px; margin-left: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); backdrop-filter: blur(4px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div style="font-size: 16px; font-weight: 600; color: #f8fafc;">📖 {row['book_title']} <span style="font-weight: 400; color: #94a3b8; font-size: 14px;">- {row['author']}</span></div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            {badge}
+                            <span style="font-size: 12px; font-weight: 700; color: #cbd5e1; background: rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 10px;">{row['vote_count']} Oy</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 13px; color: #cbd5e1; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                        <span>{avatar} Öneren: <b>{sug_name}</b></span>
+                    </div>
+                    {voters_section}
+                </div>
+                """, unsafe_allow_html=True)
