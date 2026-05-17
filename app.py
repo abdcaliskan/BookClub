@@ -324,8 +324,25 @@ with tab1:
     if active_meeting.empty:
         st.warning("Şu an planlanmış aktif bir buluşma/oylama yok. Lütfen '📅 Yeni Buluşma Planla' sekmesine giderek bir etkinlik oluşturun.")
         
-        # Sıradaki buluşma ve seçilen kitap bilgisi gösterimi
-        latest_completed = fetch_data("SELECT * FROM meetings WHERE status = 'Tamamlandı' ORDER BY id DESC LIMIT 1")
+        # Sıradaki buluşma ve seçilen kitap bilgisi gösterimi (Akıllı Geri Sayım)
+        completed_meetings = fetch_data("SELECT * FROM meetings WHERE status = 'Tamamlandı' ORDER BY meeting_date ASC")
+        latest_completed = pd.DataFrame()
+        if not completed_meetings.empty:
+            now = datetime.now()
+            future_meetings = []
+            for idx, row in completed_meetings.iterrows():
+                try:
+                    m_dt = datetime.strptime(row['meeting_date'], "%Y-%m-%d %H:%M")
+                    if m_dt > now:
+                        future_meetings.append(row)
+                except:
+                    pass
+            if future_meetings:
+                latest_completed = pd.DataFrame([future_meetings[0]])
+            else:
+                # Eğer hepsi geçmişteyse en son ekleneni al
+                latest_completed = fetch_data("SELECT * FROM meetings WHERE status = 'Tamamlandı' ORDER BY id DESC LIMIT 1")
+                
         if not latest_completed.empty:
             comp_id = latest_completed.iloc[0]['id']
             comp_title = latest_completed.iloc[0]['title']
