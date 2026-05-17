@@ -373,10 +373,10 @@ with tab1:
                 badge_bg = "#6366f1"
                 
                 sel_badge = f"<span style='float:right; background:{badge_bg};color:white;padding:3px 8px;border-radius:10px;font-size:12px;margin-top:5px;box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);'>SEÇİLDİ</span>" if is_selected else ""
-                voters_html = f"<div style='font-size: 13px; color: {sub_text_color}; margin-top: 6px; margin-left: 2px;'>👥 {row['voters']}</div>" if row['voters'] else ""
-                note_text = f"<div style='font-size: 13px; color: {sub_text_color}; margin-top: 6px; margin-left: 2px; font-style: italic;'>💡 {row['suggested_by']}: {row['notes']}</div>" if row['notes'] else f"<div style='font-size: 13px; color: {sub_text_color}; margin-top: 6px; margin-left: 2px; font-style: italic;'>💡 Öneren: {row['suggested_by']}</div>"
+                voters_html = f"<div style='font-size: 13px; color: {sub_text_color}; margin-top: 6px; margin-left: 2px;'>👥 {row['voters']}</div>" if pd.notnull(row['voters']) and str(row['voters']).strip() != '' else ""
+                note_text = f"<div style='font-size: 13px; color: {sub_text_color}; margin-top: 6px; margin-left: 2px; font-style: italic;'>💡 {row['suggested_by']}: {row['notes']}</div>" if pd.notnull(row['notes']) and str(row['notes']).strip() != '' else f"<div style='font-size: 13px; color: {sub_text_color}; margin-top: 6px; margin-left: 2px; font-style: italic;'>💡 Öneren: {row['suggested_by']}</div>"
                 
-                has_voted = st.session_state['username'] and st.session_state['username'] in (row['voters'].split(', ') if row['voters'] else [])
+                has_voted = st.session_state['username'] and st.session_state['username'] in (str(row['voters']).split(', ') if pd.notnull(row['voters']) and str(row['voters']).strip() != '' else [])
                 
                 html = f"""<div style="position: relative; background-color: {bg_color}; border-radius: 16px; padding: 14px 18px; margin-bottom: 8px; border: 1px solid {border_color}; box-shadow: 0 4px 6px rgba(0,0,0,0.1); backdrop-filter: blur(8px);">
 <div style="position: absolute; top: 0; left: 0; height: 100%; width: {pct}%; background-color: {bar_color}; opacity: 0.3; border-radius: 16px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);"></div>
