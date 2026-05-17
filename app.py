@@ -616,7 +616,7 @@ with tab4:
     
     query = """
     SELECT IFNULL(m.title, 'Eski Sistem') as 'Buluşma', b.title as 'Kitap Adı', b.author as 'Yazar', 
-           b.status as 'Durum', COUNT(v.id) as 'Oy Sayısı', GROUP_CONCAT(v.voter_name, ', ') as 'Oy Verenler'
+           b.suggested_by as 'Öneren', b.status as 'Durum', COUNT(v.id) as 'Oy Sayısı', GROUP_CONCAT(v.voter_name, ', ') as 'Oy Verenler'
     FROM books b
     LEFT JOIN meetings m ON b.meeting_id = m.id
     LEFT JOIN votes v ON b.id = v.book_id
