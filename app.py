@@ -83,6 +83,24 @@ def fetch_data(query, params=()):
     conn.close()
     return df
 
+def format_turkish_date(date_str):
+    if not date_str:
+        return ""
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
+        months = [
+            "", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", 
+            "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+        ]
+        days = [
+            "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"
+        ]
+        day_name = days[dt.weekday()]
+        month_name = months[dt.month]
+        return f"{dt.day} {month_name} {day_name} {dt.strftime('%H:%M')}"
+    except:
+        return date_str
+
 # --- KULLANICI ARAYÜZÜ ---
 st.set_page_config(page_title="Kitap Kulübü", page_icon="📚", layout="wide")
 
@@ -288,6 +306,7 @@ with tab2:
     st.subheader("📋 Tüm Buluşmalar")
     df_m = fetch_data("SELECT id, title as 'Başlık', meeting_date as 'Buluşma Tarihi', status as 'Durum' FROM meetings ORDER BY id DESC")
     if not df_m.empty:
+        df_m['Buluşma Tarihi'] = df_m['Buluşma Tarihi'].apply(format_turkish_date)
         # Renklendirme fonksiyonu
         def color_status_m(val):
             color = '#4ade80' if val == 'Aktif' else '#94a3b8'
@@ -339,7 +358,7 @@ with tab1:
                 <div style="background-color: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 16px; padding: 22px; margin-top: 25px; backdrop-filter: blur(10px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);">
                     <h3 style="margin-top: 0; color: #a5b4fc; font-weight: 700; background: -webkit-linear-gradient(45deg, #a5b4fc, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">📖 Sıradaki Okuma ve Buluşma Bilgisi</h3>
                     <p style="font-size: 16px; margin-bottom: 8px; color: #f8fafc;"><b>Etkinlik:</b> {comp_title}</p>
-                    <p style="font-size: 16px; margin-bottom: 8px; color: #f8fafc;"><b>Buluşma Tarihi:</b> {comp_date}</p>
+                    <p style="font-size: 16px; margin-bottom: 8px; color: #f8fafc;"><b>Buluşma Tarihi:</b> {format_turkish_date(comp_date)}</p>
                     <p style="font-size: 18px; color: #f8fafc; margin-bottom: 12px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                         <b>Okunacak Kitap:</b> 📖 <i>{b_title}</i> - {b_author} <span style="font-size: 14px; color: #94a3b8; font-weight: normal;">(Öneren: {b_sug})</span>
                     </p>
@@ -352,7 +371,7 @@ with tab1:
         m_title = active_meeting.iloc[0]['title']
         m_date = active_meeting.iloc[0]['meeting_date']
         
-        st.markdown(f"### 📍 Mevcut Etkinlik: {m_title} <span style='font-size:16px; color:#94a3b8;'>(Buluşma: {m_date})</span>", unsafe_allow_html=True)
+        st.markdown(f"### 📍 Mevcut Etkinlik: {m_title} <span style='font-size:16px; color:#94a3b8;'>(Buluşma: {format_turkish_date(m_date)})</span>", unsafe_allow_html=True)
         
         col1, col2 = st.columns([3, 1])
         with col2:
