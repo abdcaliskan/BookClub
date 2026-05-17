@@ -229,6 +229,41 @@ with tab2:
                 st.success("Yeni buluşma başarıyla oluşturuldu ve aktif hale getirildi!")
                 st.rerun()
 
+    active_m = fetch_data("SELECT * FROM meetings WHERE status = 'Aktif' ORDER BY id DESC LIMIT 1")
+    if not active_m.empty:
+        st.markdown("---")
+        st.subheader("✏️ Aktif Buluşmayı Düzenle")
+        act_id = active_m.iloc[0]['id']
+        act_title = active_m.iloc[0]['title']
+        act_date_str = active_m.iloc[0]['meeting_date']
+        
+        try:
+            act_dt = datetime.strptime(act_date_str, "%Y-%m-%d %H:%M")
+            def_d = act_dt.date()
+            def_t = act_dt.time()
+        except:
+            def_d = datetime.now().date()
+            def_t = datetime.now().time()
+            
+        with st.form("edit_meeting_form"):
+            e_title = st.text_input("Buluşma Adı", value=act_title)
+            c1, c2 = st.columns(2)
+            with c1:
+                e_date = st.date_input("Yeni Buluşma Tarihi", value=def_d)
+            with c2:
+                e_time = st.time_input("Yeni Buluşma Saati", value=def_t)
+                
+            if st.form_submit_button("Değişiklikleri Kaydet"):
+                if not st.session_state['username']:
+                    st.error("Lütfen sol menüden adınızı girin!")
+                elif not e_title:
+                    st.error("Buluşma adı zorunludur.")
+                else:
+                    new_dt = f"{e_date} {e_time.strftime('%H:%M')}"
+                    execute_query("UPDATE meetings SET title = ?, meeting_date = ? WHERE id = ?", (e_title, new_dt, int(act_id)))
+                    st.success("Aktif buluşma güncellendi!")
+                    st.rerun()
+
     st.markdown("---")
     st.subheader("📋 Tüm Buluşmalar")
     df_m = fetch_data("SELECT id, title as 'Başlık', meeting_date as 'Buluşma Tarihi', status as 'Durum' FROM meetings ORDER BY id DESC")
