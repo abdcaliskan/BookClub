@@ -366,6 +366,35 @@ with tab1:
                     <p style="font-size: 16px; color: #818cf8; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px;">{days_left_str}</p>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # Sıradaki buluşmayı düzenleme formu
+                with st.expander("✏️ Sıradaki Buluşma Bilgilerini Düzenle", expanded=False):
+                    try:
+                        comp_dt = datetime.strptime(comp_date, "%Y-%m-%d %H:%M")
+                        def_comp_d = comp_dt.date()
+                        def_comp_t = comp_dt.time()
+                    except:
+                        def_comp_d = datetime.now().date()
+                        def_comp_t = datetime.now().time()
+                        
+                    with st.form("edit_comp_meeting_form"):
+                        e_comp_title = st.text_input("Buluşma Adı", value=comp_title)
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            e_comp_date = st.date_input("Yeni Buluşma Tarihi", value=def_comp_d)
+                        with c2:
+                            e_comp_time = st.time_input("Yeni Buluşma Saati", value=def_comp_t)
+                            
+                        if st.form_submit_button("💾 Değişiklikleri Kaydet"):
+                            if not st.session_state['username']:
+                                st.error("Lütfen sol menüden adınızı seçin!")
+                            elif not e_comp_title:
+                                st.error("Buluşma adı zorunludur.")
+                            else:
+                                new_comp_dt = f"{e_comp_date} {e_comp_time.strftime('%H:%M')}"
+                                execute_query("UPDATE meetings SET title = ?, meeting_date = ? WHERE id = ?", (e_comp_title, new_comp_dt, int(comp_id)))
+                                st.success("Buluşma başarıyla güncellendi!")
+                                st.rerun()
     else:
         m_id = active_meeting.iloc[0]['id']
         m_title = active_meeting.iloc[0]['title']
