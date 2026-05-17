@@ -411,8 +411,28 @@ with tab1:
                 else:
                     st.markdown(html, unsafe_allow_html=True)
                     
+                if st.session_state['username'] and st.session_state['username'] == row['suggested_by'] and not is_selected:
+                    with st.expander("⚙️ Önerini Düzenle veya Sil", expanded=False):
+                        with st.form(f"edit_book_form_{row['id']}"):
+                            c1, c2 = st.columns(2)
+                            with c1:
+                                e_b_title = st.text_input("Kitap Adı", value=row['title'])
+                            with c2:
+                                e_b_author = st.text_input("Yazar", value=row['author'])
+                            e_b_notes = st.text_area("Notlar", value=row['notes'] if row['notes'] else "")
+                            
+                            cc1, cc2 = st.columns(2)
+                            with cc1:
+                                if st.form_submit_button("💾 Değişiklikleri Kaydet", use_container_width=True):
+                                    execute_query("UPDATE books SET title = ?, author = ?, notes = ? WHERE id = ?", (e_b_title, e_b_author, e_b_notes, row['id']))
+                                    st.rerun()
+                            with cc2:
+                                if st.form_submit_button("🗑️ Öneriyi Sil", use_container_width=True):
+                                    execute_query("DELETE FROM votes WHERE book_id = ?", (row['id'],))
+                                    execute_query("DELETE FROM books WHERE id = ?", (row['id'],))
+                                    st.rerun()
+                                    
                 st.write("")
-
 
 with tab3:
     st.header("🎉 Okumak İçin Seçilen Kitaplar")
