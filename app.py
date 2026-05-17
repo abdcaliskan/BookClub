@@ -97,7 +97,7 @@ def format_turkish_date(date_str):
         ]
         day_name = days[dt.weekday()]
         month_name = months[dt.month]
-        return f"{dt.day} {month_name} {day_name} {dt.strftime('%H:%M')}"
+        return f"{dt.day} {month_name} {dt.year} {day_name} {dt.strftime('%H:%M')}"
     except:
         return date_str
 
