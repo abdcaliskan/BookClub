@@ -180,19 +180,39 @@ st.markdown("""
 
 st.title("📚 Kitap Kulübü Merkezi")
 
+MEMBERS = {
+    "Abdullah": "🧑🏻‍💻",
+    "Reyna": "👸🏼",
+    "Settar": "🧔🏻",
+    "Kutay": "👨🏻‍🚀",
+    "Ecem": "👩🏻‍⚕️",
+    "Ayşe": "👩🏻‍🏫",
+    "Yaman": "👱🏼‍♂️",
+    "Aslı": "👩🏻‍🦰",
+    "Buse": "👱🏻‍♀️"
+}
+
 if 'username' not in st.session_state:
     st.session_state['username'] = ""
 
 with st.sidebar:
     st.markdown("<h2 style='-webkit-text-fill-color: #f8fafc;'>👤 Profil</h2>", unsafe_allow_html=True)
-    user_input = st.text_input("Adınız (İşlem yapmak için gerekli):", value=st.session_state['username'])
-    if user_input:
-        st.session_state['username'] = user_input.strip()
     
-    if st.session_state['username']:
-        st.success(f"Hoş geldin, {st.session_state['username']}!")
+    options = ["👀 Sen kimsin?"] + [f"{emoji} {name}" for name, emoji in MEMBERS.items()]
+    
+    default_index = 0
+    if st.session_state['username'] in MEMBERS:
+        default_index = list(MEMBERS.keys()).index(st.session_state['username']) + 1
+        
+    selected_profile = st.selectbox("Kendini seç:", options, index=default_index)
+    
+    if selected_profile != "👀 Sen kimsin?":
+        name = selected_profile.split(" ", 1)[1]
+        st.session_state['username'] = name
+        st.success(f"Hoş geldin, {name}!")
     else:
-        st.warning("Lütfen adınızı girin.")
+        st.session_state['username'] = ""
+        st.warning("Lütfen listeden kendini seç.")
 
 tab1, tab2, tab3, tab4 = st.tabs(["🏠 Ana Sayfa & Oylama", "📅 Yeni Buluşma Planla", "🏆 Seçilen Kitaplar", "🕰️ Geçmiş"])
 
